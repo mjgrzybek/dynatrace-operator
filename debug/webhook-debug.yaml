@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    dynatrace.com/operator: dynakube
+    internal.dynatrace.com/component: webhook
+  name: dynatrace-webhook
+  namespace: dynatrace
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      internal.dynatrace.com/app: webhook
+      internal.dynatrace.com/component: webhook
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: webhook
+      creationTimestamp: null
+      labels:
+        dynatrace.com/operator: oneagent
+        internal.dynatrace.com/app: webhook
+        internal.dynatrace.com/component: webhook
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      containers:
+      - command:
+        - sh
+        - -c
+        - go install github.com/go-delve/delve/cmd/dlv@latest; while true; do sleep 1; done
+        image: golang:1.17
+        imagePullPolicy: IfNotPresent
+        name: debugger
+        resources: {}
+        securityContext:
+          privileged: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      - args:
+        - webhook-server
+        - --certs-dir=/tmp/k8s-webhook-server/serving-certs/
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        image: quay.io/dynatrace/dynatrace-operator:snapshot-feature-healthz-to-livez
+        imagePullPolicy: Always
+        name: webhook
+        ports:
+        - containerPort: 8383
+          name: metrics
+          protocol: TCP
+        - containerPort: 8384
+          name: validation
+          protocol: TCP
+        - containerPort: 8443
+          name: server-port
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /livez
+            port: server-port
+            scheme: HTTPS
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 300m
+            memory: 128Mi
+          requests:
+            cpu: 300m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - all
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs/
+          name: certs-dir
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: dynatrace-webhook
+      serviceAccountName: dynatrace-webhook
+      shareProcessNamespace: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: certs-dir

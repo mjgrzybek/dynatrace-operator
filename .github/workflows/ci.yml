@@ -124,7 +124,7 @@ jobs:
             "-ldflags=-X 'github.com/Dynatrace/dynatrace-operator/src/version.Version=${VERSION}'"
             "-X 'github.com/Dynatrace/dynatrace-operator/src/version.Commit=${GITHUB_SHA}'"
             "-X 'github.com/Dynatrace/dynatrace-operator/src/version.BuildDate=${build_date}'"
-            "-linkmode external -extldflags '-static' -s -w"
+            "-linkmode external -extldflags '-static'"
           )
 
           # Set output parameters.

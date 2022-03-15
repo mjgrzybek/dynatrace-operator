@@ -7,7 +7,7 @@ go_build_args=(
   "-ldflags=-X 'github.com/Dynatrace/dynatrace-operator/src/version.Version=${TAG}'"
   "-X 'github.com/Dynatrace/dynatrace-operator/src/version.Commit=${COMMIT}'"
   "-X 'github.com/Dynatrace/dynatrace-operator/src/version.BuildDate=${build_date}'"
-  "-linkmode external -extldflags '-static' -s -w"
+  "-linkmode external -extldflags '-static'"
 )
 
 if [[ "${GCR:-}" == "true" ]]; then
