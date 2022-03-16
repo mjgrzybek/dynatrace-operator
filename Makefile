@@ -83,11 +83,18 @@ uninstall: manifests kustomize
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize
+deploy: build-kustomization-files
+	kubectl apply -f dev/kubernetes-all.yaml
+	make reset-kustomization-files
+
+predeploy: manifests kustomize
 	kubectl get namespace dynatrace || kubectl create namespace dynatrace
 	cd config/deploy/kubernetes && $(KUSTOMIZE) edit set image "quay.io/dynatrace/dynatrace-operator:snapshot"=$(BRANCH_IMAGE)
-	$(KUSTOMIZE) build config/deploy/kubernetes | kubectl apply -f -
-	make reset-kustomization-files
+
+# Prepare deployment .yaml
+build-kustomization-files: predeploy
+	[ -d "dev" ] || mkdir "dev"
+	$(KUSTOMIZE) build config/deploy/kubernetes > dev/kubernetes-all.yaml
 
 # Deploy controller in the configured OpenShift cluster in ~/.kube/config
 deploy-ocp: manifests kustomize
