@@ -3932,7 +3932,6 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
       labels:
         app.kubernetes.io/name: dynatrace-operator
         app.kubernetes.io/version: "0.4.2"
