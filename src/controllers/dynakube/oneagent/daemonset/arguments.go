@@ -20,6 +20,7 @@ func (dsInfo *builderInfo) arguments() []string {
 	args = dsInfo.appendProxyArg(args)
 	args = dsInfo.appendNetworkZoneArg(args)
 	args = appendOperatorVersionArg(args)
+	args = appendInfraOnlyArg(args)
 	args = append(args, metadata.AsArgs()...)
 	return args
 }
@@ -40,6 +41,10 @@ func (dsInfo *builderInfo) appendProxyArg(args []string) []string {
 		return append(args, "--set-proxy=$(https_proxy)")
 	}
 	return args
+}
+
+func appendInfraOnlyArg(args []string) []string {
+	return append(args, "--set-infra-only")
 }
 
 func (dsInfo *builderInfo) hasProxy() bool {
