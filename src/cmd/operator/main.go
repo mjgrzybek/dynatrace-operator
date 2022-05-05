@@ -134,7 +134,7 @@ func main() {
 func getKubeConfig() *rest.Config {
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Error(err, "")
+		log.Error(err, "error getting kube config")
 		os.Exit(1)
 	}
 	return cfg
