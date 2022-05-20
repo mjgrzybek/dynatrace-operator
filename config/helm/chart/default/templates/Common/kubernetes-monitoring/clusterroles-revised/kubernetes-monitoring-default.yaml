@@ -1,0 +1,33 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dynatrace-kubernetes-monitoring-default
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - pods
+    verbs:
+      - list
+      - watch
+#  - nonResourceURLs:
+#      - /version # version loader, not needed
+#      - /readyz # control plane, not needed
+#      - /healthz # control plane, not needed
+#      - /livez # unused
+#    verbs:
+#      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dynatrace-kubernetes-monitoring-default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dynatrace-kubernetes-monitoring-default
+subjects:
+  - kind: ServiceAccount
+    name: dynatrace-kubernetes-monitoring
+    namespace: dynatrace
