@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-var ()
-
 type SecretConfig struct {
 	// For the client
 	ApiUrl        string `json:"apiUrl"`
