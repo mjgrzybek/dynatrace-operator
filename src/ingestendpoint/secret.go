@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	UrlSecretField   = "DT_METRICS_INGEST_URL"
-	TokenSecretField = "DT_METRICS_INGEST_API_TOKEN"
-	StatsdIngestUrl  = "DT_STATSD_INGEST_URL"
-	configFile       = "endpoint.properties"
+	MetricsUrlSecretField   = "DT_METRICS_INGEST_URL"
+	MetricsTokenSecretField = "DT_METRICS_INGEST_API_TOKEN"
+	StatsdUrlSecretField    = "DT_STATSD_INGEST_URL"
+	configFile              = "endpoint.properties"
 )
 
 // EndpointSecretGenerator manages the mint endpoint secret generation for the user namespaces.
@@ -132,15 +132,17 @@ func (g *EndpointSecretGenerator) prepare(ctx context.Context, dk *dynatracev1be
 
 	var endpointBuf bytes.Buffer
 
-	if _, err := endpointBuf.WriteString(fmt.Sprintf("%s=%s\n", UrlSecretField, fields[UrlSecretField])); err != nil {
-		return nil, errors.WithStack(err)
-	}
-	if _, err := endpointBuf.WriteString(fmt.Sprintf("%s=%s\n", TokenSecretField, fields[TokenSecretField])); err != nil {
-		return nil, errors.WithStack(err)
+	if !dk.FeatureDisableMetadataEnrichment() {
+		if _, err := endpointBuf.WriteString(fmt.Sprintf("%s=%s\n", MetricsUrlSecretField, fields[MetricsUrlSecretField])); err != nil {
+			return nil, errors.WithStack(err)
+		}
+		if _, err := endpointBuf.WriteString(fmt.Sprintf("%s=%s\n", MetricsTokenSecretField, fields[MetricsTokenSecretField])); err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 
 	if dk.NeedsStatsd() {
-		if _, err := endpointBuf.WriteString(fmt.Sprintf("%s=%s\n", StatsdIngestUrl, fields[StatsdIngestUrl])); err != nil {
+		if _, err := endpointBuf.WriteString(fmt.Sprintf("%s=%s\n", StatsdUrlSecretField, fields[StatsdUrlSecretField])); err != nil {
 			return nil, errors.WithStack(err)
 		}
 	}
@@ -160,20 +162,20 @@ func (g *EndpointSecretGenerator) PrepareFields(ctx context.Context, dk *dynatra
 	}
 
 	if token, ok := tokens.Data[dtclient.DynatraceDataIngestToken]; ok {
-		fields[TokenSecretField] = string(token)
+		fields[MetricsTokenSecretField] = string(token)
 	}
 
 	if diUrl, err := dataIngestUrl(dk); err != nil {
 		return nil, err
 	} else {
-		fields[UrlSecretField] = diUrl
+		fields[MetricsUrlSecretField] = diUrl
 	}
 
 	if dk.NeedsStatsd() {
 		if statsdUrl, err := statsdIngestUrl(dk); err != nil {
 			return nil, err
 		} else {
-			fields[StatsdIngestUrl] = statsdUrl
+			fields[StatsdUrlSecretField] = statsdUrl
 		}
 	}
 
