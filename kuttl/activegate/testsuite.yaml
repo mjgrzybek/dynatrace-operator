@@ -18,3 +18,4 @@ commands:
   timeout: 200
 - command: kubectl -n dynatrace wait pod --for=condition=ready -l app.kubernetes.io/component=operator --timeout=200s
   timeout: 200
+
