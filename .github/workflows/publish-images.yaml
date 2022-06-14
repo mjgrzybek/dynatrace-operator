@@ -40,10 +40,11 @@ jobs:
           goargs: ${{ needs.prepare.outputs.goargs }}
           labels: ${{ needs.prepare.outputs.labels }}
           image-tag: ${{ needs.prepare.outputs.version }}
+
   push:
     name: Push images
     environment: Release
-    needs: [prepare,build]
+    needs: [prepare, build]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -83,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        registry: [ rhcc, gcr, dockerhub ]
+        registry: [rhcc, gcr, dockerhub]
         include:
           - registry: rhcc
             url: registry.connect.redhat.com
@@ -116,3 +117,4 @@ jobs:
           docker pull ${{matrix.url}}/${{matrix.repository}}:${{ needs.prepare.outputs.version }}-amd64
           docker pull ${{matrix.url}}/${{matrix.repository}}:${{ needs.prepare.outputs.version }}-arm64
           hack/build/ci/create-manifest.sh "${IMAGE}" "${{ needs.prepare.outputs.version }}" true
+  

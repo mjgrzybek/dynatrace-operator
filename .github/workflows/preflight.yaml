@@ -1,0 +1,37 @@
+name: preflight
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+
+env:
+  PREFLIGHT_VERSION: "1.2.1"
+  PREFLIGHT_SUCCESS_PHRASE: "Preflight result: PASSED"
+
+jobs:
+  preflight:
+    name: Run preflight on image
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: wget
+      uses: wei/wget@c15e476d1463f4936cb54f882170d9d631f1aba5
+      with:
+        args: -O preflight https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/${{env.PREFLIGHT_VERSION}}/preflight-linux-amd64
+    - name: chmod
+      run: |
+        sudo chmod +x preflight
+    - name: run preflight on image
+      run: |
+        echo ">>> image_name: ${{ inputs.image_name }}"
+        ./preflight check container ${{ inputs.image_name }} > >(tee -a report.json) 2> >(tee -a preflight.log >&2)
+    - name: check if report indicates success
+      run: |
+        grep "${{env.PREFLIGHT_SUCCESS_PHRASE}}" preflight.log
+    # - name: upload report to redhat
+    #   run: |
+    #      ./preflight check container ${{ inputs.image_name }} --submit --pyxis-api-token=<API-Token> --certification-project-id=<projectid from the whole project different one than the image!> --docker-config=./docker-config.json
