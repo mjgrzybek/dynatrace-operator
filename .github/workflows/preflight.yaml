@@ -27,7 +27,6 @@ jobs:
         sudo chmod +x preflight
     - name: run preflight on image
       run: |
-        echo ">>> image_name: ${{ inputs.image_name }}"
         ./preflight check container ${{ inputs.image_name }} > >(tee -a report.json) 2> >(tee -a preflight.log >&2)
     - name: check if report indicates success
       run: |
