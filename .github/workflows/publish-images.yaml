@@ -113,8 +113,36 @@ jobs:
           IMAGE: ${{matrix.url}}/${{matrix.repository}}
         # Simply pulls, otherwise the artifact would need to be re-downloaded and re-tagged correctly which would mean
         # two more steps instead of two more lines
-        run: |          
+        run: |
           docker pull ${{matrix.url}}/${{matrix.repository}}:${{ needs.prepare.outputs.version }}-amd64
           docker pull ${{matrix.url}}/${{matrix.repository}}:${{ needs.prepare.outputs.version }}-arm64
           hack/build/ci/create-manifest.sh "${IMAGE}" "${{ needs.prepare.outputs.version }}" true
-  
+
+  preflight_for_rhcc:
+    name: Validate image with RedHat's preflight tool
+    needs: [prepare, push]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        registry: [rhcc]
+        include:
+          - registry: rhcc
+            url: registry.connect.redhat.com
+            repository: dynatrace/dynatrace-operator
+            username: ${{ secrets.RHCC_USERNAME }}
+            password: ${{ secrets.RHCC_PASSWORD }}
+    steps:
+      - name: Login to ${{matrix.repository}}
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ matrix.url }}
+          username: ${{ matrix.username }}
+          password: ${{ matrix.password }}
+      - name: Preflight
+        env:
+          IMAGE: ${{matrix.url}}/${{matrix.repository}}
+        uses: ./.github/workflows/preflight.yaml
+        with:
+          image_name: ${IMAGE}
+
+

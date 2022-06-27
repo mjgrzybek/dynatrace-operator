@@ -212,11 +212,4 @@ jobs:
         run: |
           hack/build/ci/create-manifest.sh "${IMAGE_QUAY}" "${{ needs.prepare.outputs.version }}" false
 
-  preflight_for_rhcc:
-    needs: [prepare]
-    name: Validate image with RedHat's preflight tool
-    uses: ./.github/workflows/preflight.yaml
-    with:
-      image_name: ${{ needs.prepare.outputs.registry }}/${{ needs.prepare.outputs.repository }}:${{ needs.prepare.outputs.version }}
-
 
