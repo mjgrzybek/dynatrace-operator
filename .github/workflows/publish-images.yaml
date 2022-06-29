@@ -41,10 +41,17 @@ jobs:
           labels: ${{ needs.prepare.outputs.labels }}
           image-tag: ${{ needs.prepare.outputs.version }}
 
+  preflight_for_rhcc:
+    needs: [ build ]
+    name: Validate image with RedHat's preflight tool
+    uses: ./.github/workflows/preflight.yaml
+    with:
+      image_tar_name:
+
   push:
     name: Push images
     environment: Release
-    needs: [prepare, build]
+    needs: [prepare, build, preflight_for_rhcc]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -113,8 +120,8 @@ jobs:
           IMAGE: ${{matrix.url}}/${{matrix.repository}}
         # Simply pulls, otherwise the artifact would need to be re-downloaded and re-tagged correctly which would mean
         # two more steps instead of two more lines
-        run: |          
+        run: |
           docker pull ${{matrix.url}}/${{matrix.repository}}:${{ needs.prepare.outputs.version }}-amd64
           docker pull ${{matrix.url}}/${{matrix.repository}}:${{ needs.prepare.outputs.version }}-arm64
           hack/build/ci/create-manifest.sh "${IMAGE}" "${{ needs.prepare.outputs.version }}" true
-  
+
