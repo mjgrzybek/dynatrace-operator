@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+  pull_request:
+    branches:
+      - "*"
+  workflow_dispatch:
+
+
+env:
+  GO_VERSION: "^1.18"
+  DOCKER_REGISTRY: "quay.io"
+  DOCKER_REPOSITORY: "dynatrace/dynatrace-operator"
+
+jobs:
+  prepare:
+    name: Prepare properties
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Prepare build parameters
+        id: prep
+        run: |
+          hack/build/ci/prepare-build-variables.sh
+      - name: Prepare build parameters
+        id: prepenv
+        run: |
+          # Set output parameters.
+          # Reason: global envs do not work in workflow calls
+          # More info: https://github.com/actions/runner/issues/480#issuecomment-1021278915
+
+          echo ::set-output name=goversion::${{ env.GO_VERSION }}
+          echo ::set-output name=registry::${{ env.DOCKER_REGISTRY }}
+          echo ::set-output name=repository::${{ env.DOCKER_REPOSITORY }}
+    outputs:
+      labels: ${{ steps.prep.outputs.docker_image_labels }}
+      version: ${{ steps.prep.outputs.docker_image_tag }}
+      goargs: ${{ steps.prep.outputs.go_build_args }}
+      goversion: ${{ steps.prepenv.outputs.goversion }}
+      registry: ${{ steps.prepenv.outputs.registry }}
+      repository: ${{ steps.prepenv.outputs.repository }}
+
+  build-arm64:
+    name: Prepare properties
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    - name: Set up Golang
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ needs.prepare.outputs.goversion }}
+    - name: Setup cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+          ./third_party_licenses
+        key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
+    - name: Prepare
+      run: |
+        hack/build/ci/download-go-build-deps.sh
+    - name: Build target
+      uses: docker/build-push-action@v2
+      with:
+        builder: ${{ steps.buildx.outputs.name }}
+        build-args: |
+          GO_BUILD_ARGS=${{ needs.prepare.outputs.goargs }}
+        context: .
+        file: ./Dockerfile
+        platforms: linux/${{ arm64 }}
+        push: false
+        tags: operator-${{ arm64 }}:${{ needs.prepare.outputs.image-tag }}
+        labels: ${{ needs.prepare.outputs.labels }}
+        outputs: type=docker,dest=/tmp/operator-${{ arm64 }}.tar
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: operator-${{ arm64 }}
+        path: /tmp/operator-${{ arm64 }}.tar
+        retention-days: 1
+
+
