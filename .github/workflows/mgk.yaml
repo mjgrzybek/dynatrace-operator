@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - release-*
+      - "*"
   pull_request:
     branches:
       - "*"
@@ -46,8 +47,9 @@ jobs:
       repository: ${{ steps.prepenv.outputs.repository }}
 
   build-arm64:
-    name: Prepare properties
+    name: build-arm64
     runs-on: ubuntu-latest
+    needs: [prepare]
     steps:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
@@ -57,14 +59,14 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: ${{ needs.prepare.outputs.goversion }}
-    - name: Setup cache
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ./third_party_licenses
-        key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
+#    - name: Setup cache
+#      uses: actions/cache@v2
+#      with:
+#        path: |
+#          ~/go/pkg/mod
+#          ~/.cache/go-build
+#          ./third_party_licenses
+#        key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
     - name: Prepare
       run: |
         hack/build/ci/download-go-build-deps.sh
