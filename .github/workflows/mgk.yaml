@@ -59,14 +59,14 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: ${{ needs.prepare.outputs.goversion }}
-    - name: Setup cache
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ./third_party_licenses
-        key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
+#    - name: Setup cache
+#      uses: actions/cache@v2
+#      with:
+#        path: |
+#          ~/go/pkg/mod
+#          ~/.cache/go-build
+#          ./third_party_licenses
+#        key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
     - name: Prepare
       run: |
         hack/build/ci/download-go-build-deps.sh
