@@ -21,6 +21,17 @@ check_image() {
   grep "Preflight result: PASSED" "${PREFLIGHT_LOG}" || exit 1
 }
 
+submit_report() {
+  #                                                                                      ???????????????                                                                    create in step before
+  ./"${PREFLIGHT_EXECUTABLE}" check container "${IMAGE_TAG}" --submit --pyxis-api-token="${RHCC_APITOKEN}" --certification-project-id="${RHCC_PROJECT_ID}" --docker-config=./docker-config.json
+}
 
 download_preflight
 check_image
+readonly passed=$?
+if [[ ${passed} -ne 0 ]]; then
+    submit_report
+fi
+
+exit ${passed}
+

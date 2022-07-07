@@ -28,7 +28,16 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+    - name: Login to Registry to create docker-config.json
+      uses: docker/login-action@v1
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ secrets.docker_repo_username }}
+        password: ${{ secrets.docker_repo_password }}
     - name: Run preflight on image
+      env:
+        RHCC_APITOKEN: "???"
+        RHCC_PROJECT_ID: ${{ secrets.REDHAT_PROJECT_ID }}
       run: |
         hack/build/ci/preflight.sh "${{ env.PREFLIGHT_VERSION }}" "${{ env.IMAGE_TAG }}" "${{ env.PREFLIGHT_REPORT_NAME }}"
     - name: Upload reports
