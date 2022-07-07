@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -xe
+set -x
 
 readonly PREFLIGHT_VERSION="${1}"
 readonly IMAGE_TAG="${2}"
@@ -15,12 +15,24 @@ download_preflight() {
 }
 
 check_image() {
-  ./"${PREFLIGHT_EXECUTABLE}" check container "${IMAGE_TAG}" 1> "${PREFLIGHT_REPORT_NAME}" 2> "${PREFLIGHT_LOG}"
+#  ./"${PREFLIGHT_EXECUTABLE}" check container "${IMAGE_TAG}" 1> "${PREFLIGHT_REPORT_NAME}" 2> "${PREFLIGHT_LOG}"
+  ./"${PREFLIGHT_EXECUTABLE}" check container quay.io/dynatrace/dynatrace-operator:snapshot 1> "${PREFLIGHT_REPORT_NAME}" 2> "${PREFLIGHT_LOG}"
   echo "${PREFLIGHT_EXECUTABLE} returned ${?}"
   cat "${PREFLIGHT_LOG}"
   grep "Preflight result: PASSED" "${PREFLIGHT_LOG}" || exit 1
 }
 
+submit_report() {
+  # ./"${PREFLIGHT_EXECUTABLE}" check container "${IMAGE_TAG}" --submit --pyxis-api-token="${RHCC_APITOKEN}" --certification-project-id="${RHCC_PROJECT_ID}"
+  echo ./"${PREFLIGHT_EXECUTABLE}" check container "${IMAGE_TAG}" --submit --pyxis-api-token="${RHCC_APITOKEN}" --certification-project-id="${RHCC_PROJECT_ID}"
+}
 
 download_preflight
 check_image
+readonly passed=$?
+if [[ ${passed} -eq 0 ]]; then
+    submit_report
+fi
+
+exit ${passed}
+
