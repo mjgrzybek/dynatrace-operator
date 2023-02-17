@@ -13,7 +13,7 @@ RUN if [ -d ./mod ]; then mkdir -p ${GOPATH}/pkg && [ -d mod ] && mv ./mod ${GOP
 
 RUN CGO_ENABLED=1 go build "${GO_BUILD_ARGS}" -o ./build/_output/bin/dynatrace-operator ./src/cmd/
 
-FROM registry.access.redhat.com/ubi8-minimal:8.5 as dependency-src
+FROM registry.access.redhat.com/ubi8-minimal:8.7-1049.1675784874 as dependency-src
 
 RUN  microdnf install util-linux && microdnf clean all
 
